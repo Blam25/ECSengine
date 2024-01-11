@@ -7,6 +7,8 @@
 #include <string>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
+#include <SDL2/SDL_mixer.h>
+#include <SDL2/SDL_ttf.h>
 #include <boost/optional/optional.hpp>
 #include <set>
 #include "Constants.h"
@@ -20,13 +22,17 @@ using namespace std;
 #include "Rect.h"
 #include "Keyboard_Event.h"
 #include "Keyboard_Listener.h"
+#include "Speed.h"
 
 
 #define FPS 60
 
+vector<Entity> to_be_removed;
+
 void removeEntity(Entity ent) {
     Image::Remove(ent);
     Rect::Remove(ent);
+    Speed::Remove(ent);
 }
 
 Entity createPlayer(SDL_Renderer *renderer, int x, int y) {
@@ -36,6 +42,7 @@ Entity createPlayer(SDL_Renderer *renderer, int x, int y) {
     // Image asd = new Image();
     Image::New("images/bg.jpg", renderer, ent);
     Rect::New(x, y, 100, ent);
+   // Speed::New(1,1, ent);
     Keyboard_Listener::New(ent, [ent](const Keyboard_Event& keyb_event) {
         //cout << "nice";
         for (auto &rect: Rect::comps) {
@@ -44,7 +51,7 @@ Entity createPlayer(SDL_Renderer *renderer, int x, int y) {
             if (rect->ent == ent) {
                 switch (keyb_event.key) {
                     case SDLK_RIGHT:
-                        removeEntity(rect->ent);
+                        to_be_removed.push_back(rect->ent);
                         rect->rect->x += 5;
                         break;
                     case SDLK_LEFT:
@@ -92,6 +99,16 @@ void render(SDL_Renderer *renderer) {
 void move() {
     for (auto &rect: Rect::comps) {
         rect->rect->x++;
+    }
+}
+
+void move_with_speed() {
+    for ( auto &speed : Speed::comps) {
+        auto rect = Rect::Get(speed->ent);
+        if (rect.has_value()) {
+            rect->get()->rect->x += speed->xspeed;
+            rect->get()->rect->y += speed->yspeed;
+        }
     }
 }
 
@@ -196,6 +213,8 @@ int main(int argc, char *argv[]) {
         }
         //keyboard_events.clear();
         check_collisions();
+       // move_with_speed();
+
         render(renderer);
         //move();
 
@@ -203,6 +222,11 @@ int main(int argc, char *argv[]) {
         if (rect_player.has_value()) {
        //     cout << std::boolalpha << rect_player.get()->collided;
         }
+
+        for (auto remove : to_be_removed) {
+            removeEntity(remove);
+        }
+        to_be_removed.clear();
 
         delay = next_tick - SDL_GetTicks();
         if (delay > 0) {

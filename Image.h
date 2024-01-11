@@ -9,6 +9,10 @@ public:
         comps.push_back(std::unique_ptr<Image>(new Image(image_path, renderer, ent)));
     }
 
+//    ~Image() {
+//        SDL_DestroyTexture(texture);
+//    }
+
 private:
     inline Image(string image_path, SDL_Renderer *renderer, Entity ent);
 

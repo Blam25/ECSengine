@@ -9,6 +9,9 @@ public:
     unique_ptr<SDL_Rect> rect_down;
     bool collided = false;
     static void New(int x, int y, int width_height, Entity ent);
+//    ~Rect() override {
+//        SDL_dest
+//    }
 private:
     inline Rect(int x, int y, int width_height, Entity ent);
 
