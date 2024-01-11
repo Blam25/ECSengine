@@ -8,6 +8,7 @@ public:
     unique_ptr<SDL_Rect> rect_left;
     unique_ptr<SDL_Rect> rect_down;
     bool collided = false;
+    Entity collided_with;
     static void New(int x, int y, int width_height, Entity ent);
 //    ~Rect() override {
 //        SDL_dest

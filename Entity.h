@@ -8,7 +8,6 @@
 class Entity {
 public:
     inline static int id_counter = 0;
-    const int id;
 
     Entity() : id(id_counter) {
         id_counter++;
@@ -24,6 +23,8 @@ public:
         }
         return false;
     }
+private:
+    int id;
 
 };
 

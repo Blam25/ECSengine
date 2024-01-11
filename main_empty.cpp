@@ -23,17 +23,32 @@ using namespace std;
 #include "Keyboard_Event.h"
 #include "Keyboard_Listener.h"
 #include "Speed.h"
+#include "Missile.h"
 
 
 #define FPS 60
 
 vector<Entity> to_be_removed;
 
+SDL_Renderer * renderer;
+
 void removeEntity(Entity ent) {
     Image::Remove(ent);
     Rect::Remove(ent);
     Speed::Remove(ent);
+    Missile::Remove(ent);
 }
+
+Entity createMissile(string imagePath, int x, int y, int xspeed, int yspeed) {
+    auto ent = Entity();
+    Image::New(imagePath, renderer, ent);
+    Rect::New(x, y, 10, ent);
+    Missile::New(ent);
+    Speed::New(xspeed, yspeed, ent);
+    return ent;
+}
+
+int missileTimer = 0;
 
 Entity createPlayer(SDL_Renderer *renderer, int x, int y) {
     //auto ent = Entity::New();
@@ -45,13 +60,15 @@ Entity createPlayer(SDL_Renderer *renderer, int x, int y) {
    // Speed::New(1,1, ent);
     Keyboard_Listener::New(ent, [ent](const Keyboard_Event& keyb_event) {
         //cout << "nice";
+        bool create = false;
+        Entity added;
         for (auto &rect: Rect::comps) {
             //auto rect = Rect::Get(ent);
             // if (!rect.has_value()) return;
             if (rect->ent == ent) {
                 switch (keyb_event.key) {
                     case SDLK_RIGHT:
-                        to_be_removed.push_back(rect->ent);
+                        //to_be_removed.push_back(rect->ent);
                         rect->rect->x += 5;
                         break;
                     case SDLK_LEFT:
@@ -63,11 +80,21 @@ Entity createPlayer(SDL_Renderer *renderer, int x, int y) {
                     case SDLK_DOWN:
                         rect->rect->y += 5;
                         break;
+                    case SDLK_SPACE:
+                        added = rect->ent;
+                        create = true;
                     default:
                         break;
                 }
             }
         }
+        if (missileTimer > 20 && create) {
+            auto rect = Rect::Get(added);
+            createMissile("images/bg.jpg", rect->get()->rect->x+rect->get()->rect->w/2, rect->get()->rect->y, 0, -15);
+            missileTimer = 0;
+        }
+
+
     });
 
     return ent;
@@ -82,8 +109,6 @@ Entity createNPC(SDL_Renderer *renderer, int x, int y) {
 
     return ent;
 }
-
-
 
 void render(SDL_Renderer *renderer) {
     SDL_RenderClear(renderer);
@@ -147,10 +172,22 @@ void check_collisions() {
             if (&rect == &other_rect) continue;
             if (is_colliding(rect->rect, other_rect->rect)) {
                 rect->collided = true;
+                rect->collided_with = other_rect->ent;
                 other_rect->collided = true;
+                other_rect->collided_with = rect->ent;
             }
         }
         //cout << std::boolalpha << rect->collided;
+    }
+}
+
+void missile_hits() {
+    for (auto &rect: Rect::comps) {
+        if (Keyboard_Listener::Get(rect->ent).has_value()) continue;
+        auto missile = Missile::Get(rect->collided_with);
+        if (missile.has_value()) {
+            to_be_removed.push_back(rect->ent);
+        }
     }
 }
 
@@ -170,7 +207,7 @@ int main(int argc, char *argv[]) {
     }
 
     SDL_Window *window = SDL_CreateWindow("SDL test", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 800, 800, 0);
-    SDL_Renderer *renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+    renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
 
     auto player = createPlayer(renderer, 400, 400);
     createNPC(renderer, 200, 200);
@@ -179,6 +216,7 @@ int main(int argc, char *argv[]) {
     set<Keyboard_Event> keyboard_events = set<Keyboard_Event>();
     bool running = true;
     while (running) {
+        missileTimer ++;
         for (auto &rect: Rect::comps) { rect->collided = false; }
         next_tick = SDL_GetTicks() + tick_interval;
         SDL_Event e;
@@ -213,14 +251,21 @@ int main(int argc, char *argv[]) {
         }
         //keyboard_events.clear();
         check_collisions();
-       // move_with_speed();
-
+        move_with_speed();
+        missile_hits();
         render(renderer);
         //move();
 
         auto rect_player = Rect::Get(player);
         if (rect_player.has_value()) {
        //     cout << std::boolalpha << rect_player.get()->collided;
+        }
+
+
+        for (auto& rect : Rect::comps) {
+            if (rect->rect->x > 2020 || rect->rect-> x < -100 || rect->rect->y > 1180 || rect->rect->y < -100) {
+                to_be_removed.push_back(rect->ent);
+            }
         }
 
         for (auto remove : to_be_removed) {

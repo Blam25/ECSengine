@@ -12,12 +12,16 @@ public:
     Entity ent;
     inline static vector<unique_ptr<T>> comps;
     static void Remove(Entity ent) {
+        auto iter = comps.begin();
+        bool remove = false;
         for (auto i = comps.begin(); i != comps.end(); i++) {
             auto instance = Get(ent) ;
             if (instance.has_value() && *i == instance.get()) {
-                comps.erase(i);
+                iter = i;
+                remove = true;
             }
         }
+        if (remove) comps.erase(iter);
     }
     static boost::optional<unique_ptr<T>&> Get(Entity ent)  {
         for (auto &comp : comps) {
