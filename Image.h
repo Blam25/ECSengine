@@ -3,10 +3,11 @@
 class Image : public Component<Image> {
 
 public:
-    SDL_Texture *texture;
+    inline SDL_Texture *getTexture() const;
+    inline void setTexture(SDL_Texture *texture);
 
-    static void New(string image_path, SDL_Renderer *renderer, Entity ent) {
-        comps.push_back(std::unique_ptr<Image>(new Image(image_path, renderer, ent)));
+    static void New(string image_path, Entity ent) {
+        getComps().push_back(std::unique_ptr<Image>(new Image(image_path, renderer, ent)));
     }
 
 //    ~Image() {
@@ -15,12 +16,20 @@ public:
 
 private:
     inline Image(string image_path, SDL_Renderer *renderer, Entity ent);
-
+    SDL_Texture *texture;
 };
 
 inline Image::Image(string image_path, SDL_Renderer *renderer, Entity ent) : Component(ent) {
     SDL_Surface *surface = IMG_Load((constants::gResPath + image_path).c_str());
     texture = SDL_CreateTextureFromSurface(renderer, surface);
+}
+
+inline SDL_Texture *Image::getTexture() const {
+    return texture;
+}
+
+inline void Image::setTexture(SDL_Texture *_texture) {
+    this->texture = _texture;
 }
 
 #endif

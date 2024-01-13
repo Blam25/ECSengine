@@ -7,14 +7,8 @@
 
 class Entity {
 public:
-    inline static int id_counter = 0;
-
     Entity() : id(id_counter) {
         id_counter++;
-    }
-
-    static unique_ptr<Entity> New() {
-        return make_unique<Entity>();
     }
 
     bool operator== (Entity entity) {
@@ -23,9 +17,10 @@ public:
         }
         return false;
     }
+
 private:
     int id;
-
+    inline static int id_counter = 0;
 };
 
 

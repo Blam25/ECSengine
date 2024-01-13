@@ -9,8 +9,6 @@
 template <typename T>
 class Component {
 public:
-    Entity ent;
-    inline static vector<unique_ptr<T>> comps;
     static void Remove(Entity ent) {
         auto iter = comps.begin();
         bool remove = false;
@@ -35,11 +33,25 @@ public:
     Component(const Component& other) = delete;
     Component& operator = (const Component& other) = delete;
 
+    Entity getEnt() const {
+        return ent;
+    }
+
+    void setEnt(Entity _ent) {
+        this->ent = _ent;
+    }
+
+    static vector<unique_ptr<T>> &getComps() {
+        return comps;
+    }
+
+
 protected:
     Component(Entity entity) : ent(entity) {};
 
 private:
-
+    Entity ent;
+    inline static vector<unique_ptr<T>> comps;
 };
 
 template <typename T>

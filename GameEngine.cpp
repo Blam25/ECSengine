@@ -1,6 +1,7 @@
 //
 //  c++_empty
-//  
+//
+#ifndef GameEngine
 #include <iostream>
 #include <vector>
 #include "memory"
@@ -12,7 +13,8 @@
 #include <boost/optional/optional.hpp>
 #include <set>
 #include "Constants.h"
-
+inline SDL_Renderer* renderer;
+inline SDL_Window *window;
 using namespace std;
 
 #include "Entity.h"
@@ -28,60 +30,60 @@ using namespace std;
 
 #define FPS 60
 
-vector<Entity> to_be_removed;
+inline vector<Entity> to_be_removed;
 
-SDL_Renderer * renderer;
 
-void removeEntity(Entity ent) {
+
+inline void removeEntity(Entity ent) {
     Image::Remove(ent);
     Rect::Remove(ent);
     Speed::Remove(ent);
     Missile::Remove(ent);
 }
 
-Entity createMissile(string imagePath, int x, int y, int xspeed, int yspeed) {
+inline Entity createMissile(string imagePath, int x, int y, int xspeed, int yspeed) {
     auto ent = Entity();
-    Image::New(imagePath, renderer, ent);
+    Image::New(imagePath, ent);
     Rect::New(x, y, 10, ent);
     Missile::New(ent);
     Speed::New(xspeed, yspeed, ent);
     return ent;
 }
 
-int missileTimer = 0;
+inline int missileTimer = 0;
 
-Entity createPlayer(SDL_Renderer *renderer, int x, int y) {
+inline Entity createPlayer( int x, int y) {
     //auto ent = Entity::New();
     auto ent = Entity();
     Position::New(0, 0, ent);
     // Image asd = new Image();
-    Image::New("images/bg.jpg", renderer, ent);
+    Image::New("images/bg.jpg", ent);
     Rect::New(x, y, 100, ent);
    // Speed::New(1,1, ent);
     Keyboard_Listener::New(ent, [ent](const Keyboard_Event& keyb_event) {
         //cout << "nice";
         bool create = false;
         Entity added;
-        for (auto &rect: Rect::comps) {
+        for (auto &rect: Rect::getComps()) {
             //auto rect = Rect::Get(ent);
             // if (!rect.has_value()) return;
-            if (rect->ent == ent) {
+            if (rect->getEnt() == ent) {
                 switch (keyb_event.key) {
                     case SDLK_RIGHT:
                         //to_be_removed.push_back(rect->ent);
-                        rect->rect->x += 5;
+                        rect->getRect()->x += 5;
                         break;
                     case SDLK_LEFT:
-                        rect->rect->x -= 5;
+                        rect->getRect()->x -= 5;
                         break;
                     case SDLK_UP:
-                        rect->rect->y -= 5;
+                        rect->getRect()->y -= 5;
                         break;
                     case SDLK_DOWN:
-                        rect->rect->y += 5;
+                        rect->getRect()->y += 5;
                         break;
                     case SDLK_SPACE:
-                        added = rect->ent;
+                        added = rect->getEnt();
                         create = true;
                     default:
                         break;
@@ -90,7 +92,7 @@ Entity createPlayer(SDL_Renderer *renderer, int x, int y) {
         }
         if (missileTimer > 20 && create) {
             auto rect = Rect::Get(added);
-            createMissile("images/bg.jpg", rect->get()->rect->x+rect->get()->rect->w/2, rect->get()->rect->y, 0, -15);
+            createMissile("images/bg.jpg", rect->get()->getRect()->x+rect->get()->getRect()->w/2, rect->get()->getRect()->y, 0, -15);
             missileTimer = 0;
         }
 
@@ -100,45 +102,46 @@ Entity createPlayer(SDL_Renderer *renderer, int x, int y) {
     return ent;
 }
 
-Entity createNPC(SDL_Renderer *renderer, int x, int y) {
+
+inline Entity createNPC(int x, int y) {
     //auto ent = Entity::New();
     auto ent = Entity();
     Position::New(0, 0, ent);
-    Image::New("images/bg.jpg", renderer, ent);
+    Image::New("images/bg.jpg", ent);
     Rect::New(x, y, 100, ent);
 
     return ent;
 }
 
-void render(SDL_Renderer *renderer) {
+inline void render(SDL_Renderer *renderer) {
     SDL_RenderClear(renderer);
-    for (auto &image: Image::comps) {
-        auto rect = Rect::Get(image->ent);
+    for (auto &image: Image::getComps()) {
+        auto rect = Rect::Get(image->getEnt());
         if (rect.has_value()) {
-            SDL_RenderCopy(renderer, image->texture, nullptr, rect.get()->rect.get());
+            SDL_RenderCopy(renderer, image->getTexture(), nullptr, rect.get()->getRect().get());
         }
     }
     SDL_RenderPresent(renderer);
 }
 
-void move() {
-    for (auto &rect: Rect::comps) {
-        rect->rect->x++;
+inline void move() {
+    for (auto &rect: Rect::getComps()) {
+        rect->getRect()->x++;
     }
 }
 
-void move_with_speed() {
-    for ( auto &speed : Speed::comps) {
-        auto rect = Rect::Get(speed->ent);
+inline void move_with_speed() {
+    for ( auto &speed : Speed::getComps()) {
+        auto rect = Rect::Get(speed->getEnt());
         if (rect.has_value()) {
-            rect->get()->rect->x += speed->xspeed;
-            rect->get()->rect->y += speed->yspeed;
+            rect->get()->getRect()->x += speed->getXspeed();
+            rect->get()->getRect()->y += speed->getYspeed();
         }
     }
 }
 
 //Checks if any corner of the first square is inside the other square
-bool is_colliding(const unique_ptr<SDL_Rect> &rect1, const unique_ptr<SDL_Rect> &rect2) {
+inline bool is_colliding(const unique_ptr<SDL_Rect> &rect1, const unique_ptr<SDL_Rect> &rect2) {
     return (rect1->x > rect2->x &&
             rect1->x < rect2->x + rect2->w &&
             rect1->y < rect2->y &&
@@ -158,47 +161,37 @@ bool is_colliding(const unique_ptr<SDL_Rect> &rect1, const unique_ptr<SDL_Rect> 
            );
 }
 
-void check_collisions() {
-    for (auto &rect: Rect::comps) {
-//        rect->rect_down->x = rect->rect->x;
-//        rect->rect_down->y = rect->rect->y;
-//        rect->rect_down->w = rect->rect->w;
-//        rect->rect_down->h = -5;
-//        rect->rect_up->x = rect->rect->x;
-//        rect->rect_up->y = rect->rect->y - rect->rect->h;
-//        rect->rect_up->w = rect->rect->w;
-//        rect->rect_up->h = 5;
-        for (auto &other_rect: Rect::comps) {
+inline void check_collisions() {
+    for (auto &rect: Rect::getComps()) {
+        for (auto &other_rect: Rect::getComps()) {
             if (&rect == &other_rect) continue;
-            if (is_colliding(rect->rect, other_rect->rect)) {
-                rect->collided = true;
-                rect->collided_with = other_rect->ent;
-                other_rect->collided = true;
-                other_rect->collided_with = rect->ent;
+            if (is_colliding(rect->getRect(), other_rect->getRect())) {
+                rect->isCollided() = true;
+                rect->setCollidedWith(other_rect->getEnt());
+                other_rect->isCollided() = true;
+                other_rect->setCollidedWith(rect->getEnt());
             }
         }
         //cout << std::boolalpha << rect->collided;
     }
 }
 
-void missile_hits() {
-    for (auto &rect: Rect::comps) {
-        if (Keyboard_Listener::Get(rect->ent).has_value()) continue;
-        auto missile = Missile::Get(rect->collided_with);
+inline void missile_hits() {
+    for (auto &rect: Rect::getComps()) {
+        if (Keyboard_Listener::Get(rect->getEnt()).has_value()) continue;
+        auto missile = Missile::Get(rect->getCollidedWith());
         if (missile.has_value()) {
-            to_be_removed.push_back(rect->ent);
+            to_be_removed.push_back(rect->getEnt());
         }
     }
 }
 
-int main(int argc, char *argv[]) {
-    std::string s1 = "Hejsan";
-    std::cout << s1 << std::endl;
+inline vector<void (*)()> beginPlaySystems; //körs en gång när programmet startas
+inline vector<void (*)()> tickSystems; //Körs i main loopen
 
-    const int tick_interval = 1000 / FPS;
-    Uint32 next_tick;
-    int delay;
+//#include "GameApp.cpp"
 
+inline int initGame() {
     SDL_Init(SDL_INIT_EVERYTHING);
 
     if (TTF_Init() < 0) {
@@ -206,18 +199,25 @@ int main(int argc, char *argv[]) {
         return EXIT_FAILURE;
     }
 
-    SDL_Window *window = SDL_CreateWindow("SDL test", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 800, 800, 0);
+    window = SDL_CreateWindow("SDL test", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 800, 800, 0);
     renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+    return 0;
+}
 
-    auto player = createPlayer(renderer, 400, 400);
-    createNPC(renderer, 200, 200);
-    createNPC(renderer, 300, 100);
+inline int launchGame(int argc, char *argv[]) {
+
+    const int tick_interval = 1000 / FPS;
+    Uint32 next_tick;
+    int delay;
+    for (auto function : beginPlaySystems) {
+        function();
+    }
 
     set<Keyboard_Event> keyboard_events = set<Keyboard_Event>();
     bool running = true;
     while (running) {
         missileTimer ++;
-        for (auto &rect: Rect::comps) { rect->collided = false; }
+        for (auto &rect: Rect::getComps()) { rect->isCollided() = false; }
         next_tick = SDL_GetTicks() + tick_interval;
         SDL_Event e;
         if (SDL_PollEvent(&e)) {
@@ -256,15 +256,19 @@ int main(int argc, char *argv[]) {
         render(renderer);
         //move();
 
-        auto rect_player = Rect::Get(player);
-        if (rect_player.has_value()) {
-       //     cout << std::boolalpha << rect_player.get()->collided;
+        for (auto function : tickSystems) {
+            function();
         }
 
+//        auto rect_player = Rect::Get(player);
+//        if (rect_player.has_value()) {
+//       //     cout << std::boolalpha << rect_player.get()->collided;
+//        }
 
-        for (auto& rect : Rect::comps) {
-            if (rect->rect->x > 2020 || rect->rect-> x < -100 || rect->rect->y > 1180 || rect->rect->y < -100) {
-                to_be_removed.push_back(rect->ent);
+
+        for (auto& rect : Rect::getComps()) {
+            if (rect->getRect()->x > 2020 || rect->getRect()-> x < -100 || rect->getRect()->y > 1180 || rect->getRect()->y < -100) {
+                to_be_removed.push_back(rect->getEnt());
             }
         }
 
@@ -282,9 +286,9 @@ int main(int argc, char *argv[]) {
 
 
     // Städa innan programmet avslutas!
-    for (auto &image: Image::comps) {
+    for (auto &image: Image::getComps()) {
 
-        SDL_DestroyTexture(image->texture);
+        SDL_DestroyTexture(image->getTexture());
 
     }
     SDL_DestroyRenderer(renderer);
@@ -295,3 +299,4 @@ int main(int argc, char *argv[]) {
     return 0;
 }
 
+#endif

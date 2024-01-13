@@ -2,24 +2,33 @@
 class Rect : public Component<Rect> {
 
 public:
-    unique_ptr<SDL_Rect> rect;
-    unique_ptr<SDL_Rect> rect_up;
-    unique_ptr<SDL_Rect> rect_right;
-    unique_ptr<SDL_Rect> rect_left;
-    unique_ptr<SDL_Rect> rect_down;
-    bool collided = false;
-    Entity collided_with;
+
     static void New(int x, int y, int width_height, Entity ent);
+
+    inline const unique_ptr<SDL_Rect> &getRect() const;
+
+    inline void setRect(const unique_ptr<SDL_Rect> &rect);
+
+    inline bool& isCollided();
+
+    inline void setCollided(bool collided);
+
+    inline Entity getCollidedWith() const;
+
+    inline void setCollidedWith(const Entity &collidedWith);
 //    ~Rect() override {
 //        SDL_dest
 //    }
 private:
     inline Rect(int x, int y, int width_height, Entity ent);
+    unique_ptr<SDL_Rect> rect;
+    bool collided = false;
+    Entity collided_with;
 
 };
 
-void Rect::New(int x, int y, int width_height, Entity ent) {
-    comps.push_back(std::unique_ptr<Rect>(new Rect(x, y, width_height, ent)));
+inline void Rect::New(int x, int y, int width_height, Entity ent) {
+    getComps().push_back(std::unique_ptr<Rect>(new Rect(x, y, width_height, ent)));
 }
 
 inline Rect::Rect(int x, int y, int width_height, Entity ent) : Component(ent) {
@@ -29,4 +38,25 @@ inline Rect::Rect(int x, int y, int width_height, Entity ent) : Component(ent) {
     rect->h = width_height;
     rect->w = width_height;
 }
+
+inline const unique_ptr<SDL_Rect> &Rect::getRect() const {
+    return rect;
+}
+
+inline bool& Rect::isCollided() {
+    return collided;
+}
+
+inline void Rect::setCollided(bool collided) {
+    Rect::collided = collided;
+}
+
+inline Entity Rect::getCollidedWith() const {
+    return collided_with;
+}
+
+inline void Rect::setCollidedWith(const Entity &collidedWith) {
+    collided_with = collidedWith;
+}
+
 #endif
