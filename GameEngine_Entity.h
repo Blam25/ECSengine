@@ -2,8 +2,9 @@
 // Created by Martvall on 17/11/2023.
 //
 
-#ifndef CPROG_TEMPLATE_WIN_231017_ENTITY_H
-#define CPROG_TEMPLATE_WIN_231017_ENTITY_H
+#ifndef Entity_h
+#define Entity_h
+
 namespace Engine {
 
 //Wrapper klass för en int med tillhörande counter som räknar uppåt.

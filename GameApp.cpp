@@ -1,16 +1,18 @@
 //
 // Created by Martvall on 13/01/2024.
 //
-//#include "GameEngine.cpp"
+//Includes tillhörande spelmotorn samt dess komponenter
 #include "GameEngine.h"
-#include "Image.h"
-#include "Rect.h"
-#include "Keyboard_Event.h"
-#include "Keyboard_Listener.h"
-#include "Speed.h"
-#include "Missile.h"
-#include "NPC.h"
-#include "PowerUp.h"
+#include "GameEngine_Image.h"
+#include "GameEngine_Rect.h"
+#include "GameEngine_KeybEvent.h"
+#include "GameEngine_KeybListener.h"
+#include "GameEngine_Speed.h"
+#include "GameEngine_NPC.h"
+
+//Includes av komponenter tillhörande spelet
+#include "GameApp_Missile.h"
+#include "GameApp_PowerUp.h"
 
 
 //Referens till spelare-entityn för enkel referering
@@ -32,7 +34,7 @@ inline Engine::Entity createMissile(int x, int y, int xspeed, int yspeed) {
     Engine::Entity ent = Engine::Entity();
     Engine::Image::New("images/missile1.jpg", ent);
     Engine::Rect::New(x, y, 7, ent);
-    Engine::Missile::New(ent);
+    Missile::New(ent);
     Engine::Speed::New(xspeed, yspeed, ent);
     return ent;
 }
@@ -42,7 +44,7 @@ inline Engine::Entity createPowerUp(int x, int y, int xspeed, int yspeed) {
     Engine::Entity ent = Engine::Entity();
     Engine::Image::New("images/missile1.jpg", ent);
     Engine::Rect::New(x, y, 12, ent);
-    Engine::PowerUp::New(ent);
+    PowerUp::New(ent);
     Engine::Speed::New(xspeed, yspeed, ent);
     return ent;
 }
@@ -71,7 +73,7 @@ Engine::Entity createPlayer( int x, int y) {
                     rect.get()->getRect()->y += 5;
                     break;
                 case SDLK_SPACE:
-                    if (missileTimer > 20 && Engine::PowerUp::Get(ent).has_value()) {
+                    if (missileTimer > 20 && PowerUp::Get(ent).has_value()) {
                         createMissile(rect->get()->getRect()->x+rect->get()->getRect()->w/2, rect->get()->getRect()->y, 0, -15);
                         createMissile(rect->get()->getRect()->x+rect->get()->getRect()->w/2 - 20, rect->get()->getRect()->y, -3, -15);
                         createMissile(rect->get()->getRect()->x+rect->get()->getRect()->w/2 + 20, rect->get()->getRect()->y, 3, -15);
@@ -104,7 +106,7 @@ void missile_hits() {
     for (auto &rect: Engine::Rect::getComps()) {
 //        if (Keyboard_Listener::Get(rect->getEnt()).has_value()) continue;
         if (rect->getEnt() == player) continue;
-        auto missile = Engine::Missile::Get(rect->getCollidedWith());
+        auto missile = Missile::Get(rect->getCollidedWith());
         if (missile.has_value()) {
             Engine::scheduleRemoveEntity(rect->getEnt());
         }
@@ -117,7 +119,7 @@ void player_hit() {
         auto rect = Engine::Rect::Get(player->ent);
         if (rect.has_value()) {
             auto other_rect = rect.get()->getCollidedWith();
-            if (rect.get()->isCollided() && !Engine::Missile::Get(other_rect).has_value() && !Engine::PowerUp::Get(other_rect).has_value()) {
+            if (rect.get()->isCollided() && !Missile::Get(other_rect).has_value() && !PowerUp::Get(other_rect).has_value()) {
                 Engine::scheduleRemoveEntity(player->ent);
             }
         }
@@ -127,8 +129,8 @@ void player_hit() {
 //Ge spelaren en powerup om den krockar med en powerup-entity
 void givePowerUp() {
     auto rect = Engine::Rect::Get(player);
-    if (rect.has_value() && Engine::PowerUp::Get(rect.get()->getCollidedWith()).has_value()) {
-        Engine::PowerUp::New(player);
+    if (rect.has_value() && PowerUp::Get(rect.get()->getCollidedWith()).has_value()) {
+        PowerUp::New(player);
         Engine::scheduleRemoveEntity(rect.get()->getCollidedWith());
     }
 }
@@ -222,9 +224,15 @@ void startLevelFive() {
     }
 }
 
+//Funktion för borttag av entitys hos de egenskapade komponenterna
+void removeEntitys(Engine::Entity ent) {
+    Missile::Remove(ent);
+    PowerUp::Remove(ent);
+}
+
 int main(int argc, char *argv[]) {
 
-    //Initerar nödvändiga SDL-variabler
+    //Initera nödvändiga SDL-variabler
     Engine::initGame();
 
     //Lägg till timers för tickning
@@ -242,6 +250,9 @@ int main(int argc, char *argv[]) {
     Engine::addSystem(startLevelThree);
     Engine::addSystem(startLevelFour);
     Engine::addSystem(startLevelFive);
+
+    //Lägg till borttag av entitys för de egenskapade komponenterna
+    Engine::addRemoveSystem(removeEntitys);
 
     //Skapa själva spelaren
     player = createPlayer(400, 400);

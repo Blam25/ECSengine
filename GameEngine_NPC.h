@@ -2,7 +2,8 @@
 // Created by Martvall on 13/01/2024.
 //
 
-#ifndef NPC
+#ifndef NPC_h
+#define NPC_h
 namespace Engine {
 
 //Komponent som endast utmärker ifall en entity är en NPC eller inte

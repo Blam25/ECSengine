@@ -1,9 +1,10 @@
 
 
 #include <SDL2/SDL_image.h>
-#include "Component.h"
-#ifndef Image
+#include "GameEngine_Component.h"
 
+#ifndef Image_h
+#define Image_h
 
 namespace Engine {
 //Komponent som innehåller en bild för att renderas i spelfönstret

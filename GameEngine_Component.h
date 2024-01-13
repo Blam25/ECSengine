@@ -3,7 +3,8 @@
 //
 
 
-#ifndef Component
+#ifndef Component_h
+#define Component_h
 #include <memory>
 #include <vector>
 #include <boost/optional/optional.hpp>

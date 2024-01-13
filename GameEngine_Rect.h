@@ -1,4 +1,6 @@
-#ifndef Rect
+#ifndef Rect_h
+#define Rect_h
+
 #include <SDL2/SDL_rect.h>
 #include <memory>
 namespace Engine {

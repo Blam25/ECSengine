@@ -1,9 +1,9 @@
 //
 // Created by Martvall on 13/01/2024.
 //
-#include "Entity.h"
+#include "GameEngine_Entity.h"
 #include "Constants.h"
-#include "Image.h"
+#include "GameEngine_Image.h"
 
 namespace Engine {
 

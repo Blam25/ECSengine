@@ -25,31 +25,40 @@
 #include <set>
 //#include "Constants.h"
 
-using namespace std;
-
-#include "Entity.h"
+#include "GameEngine_Entity.h"
 //#include "Component.h"
-#include "Image.h"
-#include "Rect.h"
-#include "Keyboard_Event.h"
-#include "Keyboard_Listener.h"
-#include "Speed.h"
-#include "Missile.h"
-#include "NPC.h"
-#include "PowerUp.h"
+#include "GameEngine_Image.h"
+#include "GameEngine_Rect.h"
+#include "GameEngine_KeybEvent.h"
+#include "GameEngine_KeybListener.h"
+#include "GameEngine_Speed.h"
+//#include "GameApp_Missile.h"
+#include "GameEngine_NPC.h"
+//#include "GameApp_PowerUp.h"
+
+using namespace std;
 
 namespace Engine {
 
 #define FPS 60
 
-//Tar bort samtliga Komponenter tillhörande en specifik entity
+    vector<void (*)(Entity ent)> removeEntitysFromSystem;
+
+    void addRemoveSystem(void (*function)(Entity ent)) {
+        removeEntitysFromSystem.push_back(function);
+    }
+
+    //Tar bort samtliga Komponenter tillhörande en specifik entity
     void removeEntity(Entity ent) {
         Image::Remove(ent);
         Rect::Remove(ent);
         Speed::Remove(ent);
-        Missile::Remove(ent);
+        //Missile::Remove(ent);
         NPC::Remove(ent);
-        PowerUp::Remove(ent);
+        //PowerUp::Remove(ent);
+        for (auto function : removeEntitysFromSystem) {
+            function(ent);
+        }
     }
 
 //Renderar samtliga tillagda bilder i programmet om de även har en tillhörande rektangel

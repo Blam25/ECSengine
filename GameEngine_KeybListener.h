@@ -2,8 +2,8 @@
 // Created by Martvall on 18/11/2023.
 //
 
-#ifndef CPROG_TEMPLATE_WIN_231017_KEYBOARD_LISTENER_H
-#define CPROG_TEMPLATE_WIN_231017_KEYBOARD_LISTENER_H
+#ifndef keybListener_h
+#define keybListener_h
 
 namespace Engine {
 

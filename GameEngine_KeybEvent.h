@@ -3,14 +3,14 @@
 //
 
 
-#include "Event.h"
+#include "GameEngine_Event.h"
 
-#ifndef CPROG_TEMPLATE_WIN_231017_KEYBOARD_EVENT_H
-#define CPROG_TEMPLATE_WIN_231017_KEYBOARD_EVENT_H
+#ifndef keybEvent_h
+#define keybEvent_h
 
 
 namespace Engine {
-    class Keyboard_Event : Event {
+    class Keyboard_Event : GameEngine_Event {
     public:
         static std::vector<Entity> entitys;
         SDL_KeyCode key;

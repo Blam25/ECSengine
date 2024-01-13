@@ -2,8 +2,8 @@
 // Created by Martvall on 11/01/2024.
 //
 
-#ifndef TEST1_SPEED_H
-#define TEST1_SPEED_H
+#ifndef Speed_h
+#define Speed_h
 namespace Engine {
     class Speed : public Component<Speed> {
 
