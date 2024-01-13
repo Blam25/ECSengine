@@ -1,6 +1,17 @@
-//
-//  c++_empty
-//
+
+/*
+ * Denna spelmotor är baserad på en så kallad entity-component-system (ECS) spelarkitektur
+ * där varje entity endast representeras av en siffra (i detta fall dold i en Entity klass)
+ * och spellogiken istället definieras på typer av komponenter som har koppling till en entity,
+ * istället för att koppla all logik direkt till en basklass (såsom Sprite klass exemplet i uppgiften).
+ * Idén med arkitekturen är att det är väldigt lätt att skapa nya typer av objekt som ser helt olika ut,
+ * och sedan definiera "system" på dessa (funktioner i detta fall) utan att låsas i en krånglig klasshierarki.
+ *
+ * Vi använder oss fortfarande av oop principer såsom inkapsling och arv, men istället applicerat på själva
+ * komponenterna - klassen Component är basklass för samtliga komponenter och i den går det enklast att se
+ * hur komponenterna fungerar.
+ */
+
 #ifndef GameEngine
 #include <iostream>
 #include <vector>
@@ -19,284 +30,222 @@ using namespace std;
 
 #include "Entity.h"
 #include "Component.h"
-#include "Position.h"
 #include "Image.h"
 #include "Rect.h"
 #include "Keyboard_Event.h"
 #include "Keyboard_Listener.h"
 #include "Speed.h"
 #include "Missile.h"
+#include "NPC.h"
+#include "PowerUp.h"
 
+namespace Engine {
 
 #define FPS 60
 
-inline vector<Entity> to_be_removed;
+//Tar bort samtliga Komponenter tillhörande en specifik entity
+    inline void removeEntity(Entity ent) {
+        Image::Remove(ent);
+        Rect::Remove(ent);
+        Speed::Remove(ent);
+        Missile::Remove(ent);
+        NPC::Remove(ent);
+        PowerUp::Remove(ent);
+    }
 
+//Renderar samtliga tillagda bilder i programmet om de även har en tillhörande rektangel
+    inline void render(SDL_Renderer *renderer) {
+        SDL_RenderClear(renderer);
+        for (auto &image: Image::getComps()) {
+            auto rect = Rect::Get(image->getEnt());
+            if (rect.has_value()) {
+                SDL_RenderCopy(renderer, image->getTexture(), nullptr, rect.get()->getRect().get());
+            }
+        }
+        SDL_RenderPresent(renderer);
+    }
 
+//Undersöker kollision mellan två rektanglar
+    inline bool is_colliding(const unique_ptr<SDL_Rect> &rect1, const unique_ptr<SDL_Rect> &rect2) {
+        return SDL_HasIntersection(rect1.get(), rect2.get());
+    }
 
-inline void removeEntity(Entity ent) {
-    Image::Remove(ent);
-    Rect::Remove(ent);
-    Speed::Remove(ent);
-    Missile::Remove(ent);
-}
-
-inline Entity createMissile(string imagePath, int x, int y, int xspeed, int yspeed) {
-    auto ent = Entity();
-    Image::New(imagePath, ent);
-    Rect::New(x, y, 10, ent);
-    Missile::New(ent);
-    Speed::New(xspeed, yspeed, ent);
-    return ent;
-}
-
-inline int missileTimer = 0;
-
-inline Entity createPlayer( int x, int y) {
-    //auto ent = Entity::New();
-    auto ent = Entity();
-    Position::New(0, 0, ent);
-    // Image asd = new Image();
-    Image::New("images/bg.jpg", ent);
-    Rect::New(x, y, 100, ent);
-   // Speed::New(1,1, ent);
-    Keyboard_Listener::New(ent, [ent](const Keyboard_Event& keyb_event) {
-        //cout << "nice";
-        bool create = false;
-        Entity added;
+//Undersöker kollisioner och sparar information om dem
+    inline void check_collisions() {
         for (auto &rect: Rect::getComps()) {
-            //auto rect = Rect::Get(ent);
-            // if (!rect.has_value()) return;
-            if (rect->getEnt() == ent) {
-                switch (keyb_event.key) {
-                    case SDLK_RIGHT:
-                        //to_be_removed.push_back(rect->ent);
-                        rect->getRect()->x += 5;
-                        break;
-                    case SDLK_LEFT:
-                        rect->getRect()->x -= 5;
-                        break;
-                    case SDLK_UP:
-                        rect->getRect()->y -= 5;
-                        break;
-                    case SDLK_DOWN:
-                        rect->getRect()->y += 5;
-                        break;
-                    case SDLK_SPACE:
-                        added = rect->getEnt();
-                        create = true;
-                    default:
-                        break;
+            for (auto &other_rect: Rect::getComps()) {
+                if (&rect == &other_rect) continue;
+                if (is_colliding(rect->getRect(), other_rect->getRect())) {
+                    rect->isCollided() = true;
+                    rect->setCollidedWith(other_rect->getEnt());
+                    other_rect->isCollided() = true;
+                    other_rect->setCollidedWith(rect->getEnt());
                 }
             }
         }
-        if (missileTimer > 20 && create) {
-            auto rect = Rect::Get(added);
-            createMissile("images/bg.jpg", rect->get()->getRect()->x+rect->get()->getRect()->w/2, rect->get()->getRect()->y, 0, -15);
-            missileTimer = 0;
-        }
-
-
-    });
-
-    return ent;
-}
-
-
-inline Entity createNPC(int x, int y) {
-    //auto ent = Entity::New();
-    auto ent = Entity();
-    Position::New(0, 0, ent);
-    Image::New("images/bg.jpg", ent);
-    Rect::New(x, y, 100, ent);
-
-    return ent;
-}
-
-inline void render(SDL_Renderer *renderer) {
-    SDL_RenderClear(renderer);
-    for (auto &image: Image::getComps()) {
-        auto rect = Rect::Get(image->getEnt());
-        if (rect.has_value()) {
-            SDL_RenderCopy(renderer, image->getTexture(), nullptr, rect.get()->getRect().get());
-        }
     }
-    SDL_RenderPresent(renderer);
-}
 
-inline void move() {
-    for (auto &rect: Rect::getComps()) {
-        rect->getRect()->x++;
+    inline vector<void (*)()> tickSystems; //Körs i spelloopen
+    inline vector<int *> timers; //Tickar uppåt i spelloopen
+    inline vector<Entity> to_be_removed; //Samling av enheter som ska tas bort vid slutet av loopen
+
+//Lägg till ett externt system för tickande körning
+    inline void addSystem(void (*func)()) {
+        tickSystems.push_back(func);
     }
-}
 
-inline void move_with_speed() {
-    for ( auto &speed : Speed::getComps()) {
-        auto rect = Rect::Get(speed->getEnt());
-        if (rect.has_value()) {
-            rect->get()->getRect()->x += speed->getXspeed();
-            rect->get()->getRect()->y += speed->getYspeed();
-        }
-    }
-}
-
-//Checks if any corner of the first square is inside the other square
-inline bool is_colliding(const unique_ptr<SDL_Rect> &rect1, const unique_ptr<SDL_Rect> &rect2) {
-    return (rect1->x > rect2->x &&
-            rect1->x < rect2->x + rect2->w &&
-            rect1->y < rect2->y &&
-            rect1->y > rect2->y - rect2->h
-           ) || (rect1->x + rect1->w > rect2->x &&
-                 rect1->x + rect1->w < rect2->x + rect2->w &&
-                 rect1->y < rect2->y &&
-                 rect1->y > rect2->y - rect2->h
-           ) || (rect1->x + rect1->w > rect2->x &&
-                 rect1->x + rect1->w < rect2->x + rect2->w &&
-                 rect1->y - rect1->h < rect2->y &&
-                 rect1->y - rect1->h > rect2->y - rect2->h
-           ) || (rect1->x > rect2->x &&
-                 rect1->x < rect2->x + rect2->w &&
-                 rect1->y - rect1->h < rect2->y &&
-                 rect1->y - rect1->h > rect2->y - rect2->h
-           );
-}
-
-inline void check_collisions() {
-    for (auto &rect: Rect::getComps()) {
-        for (auto &other_rect: Rect::getComps()) {
-            if (&rect == &other_rect) continue;
-            if (is_colliding(rect->getRect(), other_rect->getRect())) {
-                rect->isCollided() = true;
-                rect->setCollidedWith(other_rect->getEnt());
-                other_rect->isCollided() = true;
-                other_rect->setCollidedWith(rect->getEnt());
+//Ta bort ett externt system
+    inline void removeSystem(void (*func)()) {
+        int indexToBeRemoved = -1;
+        for (int i = 0; i != tickSystems.size(); i++) {
+            if (tickSystems[i] == func) {
+                indexToBeRemoved = i;
             }
         }
-        //cout << std::boolalpha << rect->collided;
+        if (indexToBeRemoved > -1) tickSystems.erase(tickSystems.begin() + indexToBeRemoved);
     }
-}
 
-inline void missile_hits() {
-    for (auto &rect: Rect::getComps()) {
-        if (Keyboard_Listener::Get(rect->getEnt()).has_value()) continue;
-        auto missile = Missile::Get(rect->getCollidedWith());
-        if (missile.has_value()) {
-            to_be_removed.push_back(rect->getEnt());
+//Rensa alla externa system
+    inline void clearSystems() {
+        tickSystems.clear();
+    }
+
+    inline void removeEntity(Entity ent) {
+
+    }
+
+//Lägg till en timer för att ticka uppåt
+    inline void addTimer(int *timer) {
+        timers.push_back(timer);
+    }
+
+//Ta bort en specifik timer från att ticka uppåt
+    inline void removeTimer(int *timer) {
+        int indexToBeRemoved = -1;
+        for (int i = 0; i != timers.size(); i++) {
+            if (timers[i] == timer) {
+                indexToBeRemoved = i;
+            }
         }
-    }
-}
-
-inline vector<void (*)()> beginPlaySystems; //körs en gång när programmet startas
-inline vector<void (*)()> tickSystems; //Körs i main loopen
-
-//#include "GameApp.cpp"
-
-inline int initGame() {
-    SDL_Init(SDL_INIT_EVERYTHING);
-
-    if (TTF_Init() < 0) {
-        std::cout << "Error SDL_ttf Initialization : " << SDL_GetError();
-        return EXIT_FAILURE;
+        if (indexToBeRemoved > -1) timers.erase(timers.begin() + indexToBeRemoved);
     }
 
-    window = SDL_CreateWindow("SDL test", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 800, 800, 0);
-    renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
-    return 0;
-}
-
-inline int launchGame(int argc, char *argv[]) {
-
-    const int tick_interval = 1000 / FPS;
-    Uint32 next_tick;
-    int delay;
-    for (auto function : beginPlaySystems) {
-        function();
+//Initiera de variabler som krävs för att SDL ska fungera. Måste köras innan någon image komponent skapas
+    inline int initGame() {
+        SDL_Init(SDL_INIT_EVERYTHING);
+        if (TTF_Init() < 0) {
+            std::cout << "Error SDL_ttf Initialization : " << SDL_GetError();
+            return EXIT_FAILURE;
+        }
+        window = SDL_CreateWindow("SDL test", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 800, 800, 0);
+        renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+        return 0;
     }
 
-    set<Keyboard_Event> keyboard_events = set<Keyboard_Event>();
-    bool running = true;
-    while (running) {
-        missileTimer ++;
-        for (auto &rect: Rect::getComps()) { rect->isCollided() = false; }
-        next_tick = SDL_GetTicks() + tick_interval;
-        SDL_Event e;
-        if (SDL_PollEvent(&e)) {
-            switch (e.type) {
-                case SDL_QUIT:
-                    running = false;
-                    break;
-                case SDL_KEYDOWN:
-                    keyboard_events.insert(Keyboard_Event(static_cast<SDL_KeyCode>(e.key.keysym.sym)));
-                    break;
-//                    switch(e.key.keysym.sym) {
-//                        case SDLK_RIGHT
-//                    }
-                case SDL_KEYUP: {
-                    for (set<Keyboard_Event>::iterator i = keyboard_events.begin();
-                         i != keyboard_events.end(); i++) {    //for (auto keyb_event : keyboard_events) {
-                        if ((*i).key == e.key.keysym.sym) {    //  if (keyb_event.key == e.key.keysym.sym) {
-                            keyboard_events.erase(i);
-                            // i--;
+    inline int launchGame(int argc, char *argv[]) {
+
+        //Initiera variabler för att hålla tickintervallet till 60 fps
+        const int tick_interval = 1000 / FPS;
+        Uint32 next_tick;
+        int delay;
+
+        //Set med knappar som är neddtryckta just nu
+        set<Keyboard_Event> keyboard_events = set<Keyboard_Event>();
+
+        bool running = true;
+
+        //Spelloop
+        while (running) {
+
+            //Räkna ut när nästa tick ska ske
+            next_tick = SDL_GetTicks() + tick_interval;
+
+            //Räkna upp alla timers från spelet en gång
+            for (auto timer: timers) {
+                ++(*timer);
+            }
+
+            //Rensa alla kollisioner från förra ticken
+            for (auto &rect: Rect::getComps()) {
+                rect->isCollided() = false;
+            }
+
+            //Gå igenom alla events från SDL som vi är intresserade av
+            SDL_Event e;
+            if (SDL_PollEvent(&e)) {
+                switch (e.type) {
+                    case SDL_QUIT:
+                        running = false;
+                        break;
+                    case SDL_KEYDOWN: //Lägg till ett nytt keyboard event i listan över sådana
+                        keyboard_events.insert(Keyboard_Event(static_cast<SDL_KeyCode>(e.key.keysym.sym)));
+                        break;
+                    case SDL_KEYUP: //Ta bort det keyboard event som matchar nyckelkoden från listan
+                        for (set<Keyboard_Event>::iterator i = keyboard_events.begin();
+                             i != keyboard_events.end(); i++) {
+                            if ((*i).key == e.key.keysym.sym) {
+                                keyboard_events.erase(i);
+                            }
                         }
-                    }
-                    break;
+                        break;
                 }
             }
-        }
 
-        for (auto keyb_event: keyboard_events) {
-            for (auto &listener: Keyboard_Listener::listeners) {
-                listener->handler(keyb_event);
+            //Gå igenom alla tangentbords-events och skicka de till alla tangentbords-listeners
+            for (auto keyb_event: keyboard_events) {
+                for (auto &listener: Keyboard_Listener::listeners) {
+                    listener->handler(keyb_event);
+                }
+            }
+
+            //Exekvera det inbyggda kollisionssystemet
+            check_collisions();
+
+            //exekvera alla tick-system som läggs till av spelet
+            for (auto function: tickSystems) {
+                function();
+            }
+
+            //Exekvera det inbyggda renderingssystemet
+            render(renderer);
+
+            //lägg till alla entitys utanför skärmen för borttagning
+            for (auto &rect: Rect::getComps()) {
+                if (rect->getRect()->x > 2020 || rect->getRect()->x < -100 || rect->getRect()->y > 1180 ||
+                    rect->getRect()->y < -100) {
+                    to_be_removed.push_back(rect->getEnt());
+                }
+            }
+
+            //ta bort alla enheter som är tillagda för borttagning och därefter rensa den listan
+            for (auto remove: to_be_removed) {
+                removeEntity(remove);
+            }
+            to_be_removed.clear();
+
+            //vänta så att nästa tick kommer enligt 60 fps
+            delay = next_tick - SDL_GetTicks();
+            if (delay > 0) {
+                SDL_Delay(delay);
             }
         }
-        //keyboard_events.clear();
-        check_collisions();
-        move_with_speed();
-        missile_hits();
-        render(renderer);
-        //move();
 
-        for (auto function : tickSystems) {
-            function();
+
+
+        // Städa innan programmet avslutas
+        for (auto &image: Image::getComps()) {
+
+            SDL_DestroyTexture(image->getTexture());
+
         }
-
-//        auto rect_player = Rect::Get(player);
-//        if (rect_player.has_value()) {
-//       //     cout << std::boolalpha << rect_player.get()->collided;
-//        }
+        SDL_DestroyRenderer(renderer);
+        SDL_DestroyWindow(window);
 
 
-        for (auto& rect : Rect::getComps()) {
-            if (rect->getRect()->x > 2020 || rect->getRect()-> x < -100 || rect->getRect()->y > 1180 || rect->getRect()->y < -100) {
-                to_be_removed.push_back(rect->getEnt());
-            }
-        }
-
-        for (auto remove : to_be_removed) {
-            removeEntity(remove);
-        }
-        to_be_removed.clear();
-
-        delay = next_tick - SDL_GetTicks();
-        if (delay > 0) {
-            SDL_Delay(delay);
-        }
+        SDL_Quit();
+        return 0;
     }
 
-
-
-    // Städa innan programmet avslutas!
-    for (auto &image: Image::getComps()) {
-
-        SDL_DestroyTexture(image->getTexture());
-
-    }
-    SDL_DestroyRenderer(renderer);
-    SDL_DestroyWindow(window);
-
-
-    SDL_Quit();
-    return 0;
 }
 
 #endif
