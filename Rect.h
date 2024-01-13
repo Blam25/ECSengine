@@ -38,14 +38,14 @@ namespace Engine {
     }
 
     inline Rect::Rect(int x, int y, int width_height, Entity ent) : Component(ent) {
-        rect = make_unique<SDL_Rect>();
+        rect = std::make_unique<SDL_Rect>();
         rect->x = x;
         rect->y = y;
         rect->h = width_height;
         rect->w = width_height;
     }
 
-    inline const unique_ptr<SDL_Rect> &Rect::getRect() const {
+    inline const std::unique_ptr<SDL_Rect> &Rect::getRect() const {
         return rect;
     }
 

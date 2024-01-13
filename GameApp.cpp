@@ -3,6 +3,15 @@
 //
 //#include "GameEngine.cpp"
 #include "GameEngine.h"
+#include "Image.h"
+#include "Rect.h"
+#include "Keyboard_Event.h"
+#include "Keyboard_Listener.h"
+#include "Speed.h"
+#include "Missile.h"
+#include "NPC.h"
+#include "PowerUp.h"
+
 
 //Referens till spelare-entityn för enkel referering
 //(Entity-klassen innehåller endast en int, utan någon typ av arv, därav tillåter vi värdesemantik på den klassen)
@@ -10,8 +19,7 @@ Engine::Entity player;
 
 //Skapa en enkel fiendekaraktär
 Engine::Entity createNPC(int x, int y, int xspeed, int yspeed) {
-    //auto ent = Entity::New();
-    auto ent = Engine::Entity();
+    Engine::Entity ent = Engine::Entity();
     Engine::Image::New("images/fiende1-01.jpg", ent);
     Engine::Rect::New(x, y, 50, ent);
     Engine::Speed::New(xspeed, yspeed, ent);
@@ -21,7 +29,7 @@ Engine::Entity createNPC(int x, int y, int xspeed, int yspeed) {
 
 //Skapa en missil
 inline Engine::Entity createMissile(int x, int y, int xspeed, int yspeed) {
-    auto ent = Engine::Entity();
+    Engine::Entity ent = Engine::Entity();
     Engine::Image::New("images/missile1.jpg", ent);
     Engine::Rect::New(x, y, 7, ent);
     Engine::Missile::New(ent);
@@ -31,7 +39,7 @@ inline Engine::Entity createMissile(int x, int y, int xspeed, int yspeed) {
 
 //Skapa en entity för att ge spelaren en "power-up"
 inline Engine::Entity createPowerUp(int x, int y, int xspeed, int yspeed) {
-    auto ent = Engine::Entity();
+    Engine::Entity ent = Engine::Entity();
     Engine::Image::New("images/missile1.jpg", ent);
     Engine::Rect::New(x, y, 12, ent);
     Engine::PowerUp::New(ent);
@@ -98,7 +106,7 @@ void missile_hits() {
         if (rect->getEnt() == player) continue;
         auto missile = Engine::Missile::Get(rect->getCollidedWith());
         if (missile.has_value()) {
-            Engine::to_be_removed.push_back(rect->getEnt());
+            Engine::scheduleRemoveEntity(rect->getEnt());
         }
     }
 }
@@ -110,7 +118,7 @@ void player_hit() {
         if (rect.has_value()) {
             auto other_rect = rect.get()->getCollidedWith();
             if (rect.get()->isCollided() && !Engine::Missile::Get(other_rect).has_value() && !Engine::PowerUp::Get(other_rect).has_value()) {
-                Engine::to_be_removed.push_back(player->ent);
+                Engine::scheduleRemoveEntity(player->ent);
             }
         }
     }
@@ -121,7 +129,7 @@ void givePowerUp() {
     auto rect = Engine::Rect::Get(player);
     if (rect.has_value() && Engine::PowerUp::Get(rect.get()->getCollidedWith()).has_value()) {
         Engine::PowerUp::New(player);
-        Engine::to_be_removed.push_back(rect.get()->getCollidedWith());
+        Engine::scheduleRemoveEntity(rect.get()->getCollidedWith());
     }
 }
 

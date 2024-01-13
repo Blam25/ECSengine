@@ -23,13 +23,12 @@
 #include <SDL2/SDL_ttf.h>
 #include <boost/optional/optional.hpp>
 #include <set>
-#include "Constants.h"
-inline SDL_Renderer* renderer;
-inline SDL_Window *window;
+//#include "Constants.h"
+
 using namespace std;
 
 #include "Entity.h"
-#include "Component.h"
+//#include "Component.h"
 #include "Image.h"
 #include "Rect.h"
 #include "Keyboard_Event.h"
@@ -44,7 +43,7 @@ namespace Engine {
 #define FPS 60
 
 //Tar bort samtliga Komponenter tillhörande en specifik entity
-    inline void removeEntity(Entity ent) {
+    void removeEntity(Entity ent) {
         Image::Remove(ent);
         Rect::Remove(ent);
         Speed::Remove(ent);
@@ -54,7 +53,7 @@ namespace Engine {
     }
 
 //Renderar samtliga tillagda bilder i programmet om de även har en tillhörande rektangel
-    inline void render(SDL_Renderer *renderer) {
+    void render(SDL_Renderer *renderer) {
         SDL_RenderClear(renderer);
         for (auto &image: Image::getComps()) {
             auto rect = Rect::Get(image->getEnt());
@@ -66,12 +65,12 @@ namespace Engine {
     }
 
 //Undersöker kollision mellan två rektanglar
-    inline bool is_colliding(const unique_ptr<SDL_Rect> &rect1, const unique_ptr<SDL_Rect> &rect2) {
+    bool is_colliding(const unique_ptr<SDL_Rect> &rect1, const unique_ptr<SDL_Rect> &rect2) {
         return SDL_HasIntersection(rect1.get(), rect2.get());
     }
 
 //Undersöker kollisioner och sparar information om dem
-    inline void check_collisions() {
+    void check_collisions() {
         for (auto &rect: Rect::getComps()) {
             for (auto &other_rect: Rect::getComps()) {
                 if (&rect == &other_rect) continue;
@@ -85,17 +84,17 @@ namespace Engine {
         }
     }
 
-    inline vector<void (*)()> tickSystems; //Körs i spelloopen
-    inline vector<int *> timers; //Tickar uppåt i spelloopen
-    inline vector<Entity> to_be_removed; //Samling av enheter som ska tas bort vid slutet av loopen
+    vector<void (*)()> tickSystems; //Körs i spelloopen
+    vector<int *> timers; //Tickar uppåt i spelloopen
+    vector<Entity> to_be_removed; //Samling av enheter som ska tas bort vid slutet av loopen
 
 //Lägg till ett externt system för tickande körning
-    inline void addSystem(void (*func)()) {
+    void addSystem(void (*func)()) {
         tickSystems.push_back(func);
     }
 
 //Ta bort ett externt system
-    inline void removeSystem(void (*func)()) {
+    void removeSystem(void (*func)()) {
         int indexToBeRemoved = -1;
         for (int i = 0; i != tickSystems.size(); i++) {
             if (tickSystems[i] == func) {
@@ -106,21 +105,21 @@ namespace Engine {
     }
 
 //Rensa alla externa system
-    inline void clearSystems() {
+    void clearSystems() {
         tickSystems.clear();
     }
 
-    inline void removeEntity(Entity ent) {
-
+    void scheduleRemoveEntity(Entity ent) {
+        to_be_removed.push_back(ent);
     }
 
 //Lägg till en timer för att ticka uppåt
-    inline void addTimer(int *timer) {
+    void addTimer(int *timer) {
         timers.push_back(timer);
     }
 
 //Ta bort en specifik timer från att ticka uppåt
-    inline void removeTimer(int *timer) {
+    void removeTimer(int *timer) {
         int indexToBeRemoved = -1;
         for (int i = 0; i != timers.size(); i++) {
             if (timers[i] == timer) {
@@ -130,8 +129,11 @@ namespace Engine {
         if (indexToBeRemoved > -1) timers.erase(timers.begin() + indexToBeRemoved);
     }
 
+    SDL_Renderer* renderer;
+    SDL_Window *window;
+
 //Initiera de variabler som krävs för att SDL ska fungera. Måste köras innan någon image komponent skapas
-    inline int initGame() {
+    int initGame() {
         SDL_Init(SDL_INIT_EVERYTHING);
         if (TTF_Init() < 0) {
             std::cout << "Error SDL_ttf Initialization : " << SDL_GetError();
@@ -139,10 +141,11 @@ namespace Engine {
         }
         window = SDL_CreateWindow("SDL test", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 800, 800, 0);
         renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+        Image::setRenderer(renderer);
         return 0;
     }
 
-    inline int launchGame(int argc, char *argv[]) {
+    int launchGame(int argc, char *argv[]) {
 
         //Initiera variabler för att hålla tickintervallet till 60 fps
         const int tick_interval = 1000 / FPS;
@@ -245,7 +248,6 @@ namespace Engine {
         SDL_Quit();
         return 0;
     }
-
 }
 
 #endif

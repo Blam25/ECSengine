@@ -12,7 +12,7 @@
 namespace Engine {
     class Keyboard_Event : Event {
     public:
-        static vector<Entity> entitys;
+        static std::vector<Entity> entitys;
         SDL_KeyCode key;
 
         explicit Keyboard_Event(SDL_KeyCode key) {

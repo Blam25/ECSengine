@@ -39,7 +39,7 @@ namespace Engine {
             return boost::none;
         }
 
-        virtual ~Component() = 0;
+        inline virtual ~Component() = 0;
 
         Component(const Component &other) = delete;
 
@@ -67,7 +67,7 @@ namespace Engine {
     };
 
     template<typename T>
-    Component<T>::~Component() {};
+    inline Component<T>::~Component() {};
 
 }
 #endif

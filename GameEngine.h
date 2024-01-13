@@ -22,52 +22,48 @@
 #ifndef GameEngine
 
 #include "Entity.h"
-#include "Component.h"
-#include "Image.h"
-#include "Rect.h"
-#include "Keyboard_Event.h"
-#include "Keyboard_Listener.h"
-#include "Speed.h"
-#include "Missile.h"
-#include "NPC.h"
-#include "PowerUp.h"
+//#include "Component.h"
+//#include "Image.h"
+//#include "Rect.h"
+//#include "Keyboard_Event.h"
+//#include "Keyboard_Listener.h"
+//#include "Speed.h"
+//#include "Missile.h"
+//#include "NPC.h"
+//#include "PowerUp.h"
 
 namespace Engine {
 
 #define FPS 60
 
-//Tar bort samtliga Komponenter tillhörande en specifik entity
-    inline void removeEntity(Entity ent) {
-        Image::Remove(ent);
-        Rect::Remove(ent);
-        Speed::Remove(ent);
-        Missile::Remove(ent);
-        NPC::Remove(ent);
-        PowerUp::Remove(ent);
-    }
+    //Tar bort samtliga Komponenter tillhörande en specifik entity
+    void removeEntity(Entity ent);
 
-//Undersöker kollisioner och sparar information om dem
-    inline void check_collisions();
+    //Undersöker kollisioner och sparar information om dem
+    void check_collisions();
 
-//Lägg till ett externt system för tickande körning
-    inline void addSystem(void (*func)());
+    //Lägg till ett externt system för tickande körning
+    void addSystem(void (*func)());
 
-//Ta bort ett externt system
-    inline void removeSystem(void (*func)());
+    //Ta bort ett externt system
+    void removeSystem(void (*func)());
 
-//Rensa alla externa system
-    inline void clearSystems();
+    //Rensa alla externa system
+    void clearSystems();
 
-//Lägg till en timer för att ticka uppåt
-    inline void addTimer(int *timer);
+    void scheduleRemoveEntity(Entity ent);
 
-//Ta bort en specifik timer från att ticka uppåt
-    inline void removeTimer(int *timer);
+    //Lägg till en timer för att ticka uppåt
+    void addTimer(int *timer);
 
-//Initiera de variabler som krävs för att SDL ska fungera. Måste köras innan någon image komponent skapas
-    inline int initGame();
+    //Ta bort en specifik timer från att ticka uppåt
+    void removeTimer(int *timer);
 
-    inline int launchGame(int argc, char *argv[]);
+    //Initiera de variabler som krävs för att SDL ska fungera. Måste köras innan någon image komponent skapas
+    int initGame();
+
+    //Starta spelloopen
+    int launchGame(int argc, char *argv[]);
 
 }
 #endif

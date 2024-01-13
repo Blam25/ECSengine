@@ -1,3 +1,7 @@
+
+
+#include <SDL2/SDL_image.h>
+#include "Component.h"
 #ifndef Image
 
 
@@ -6,36 +10,27 @@ namespace Engine {
     class Image : public Component<Image> {
 
     public:
-        inline SDL_Texture *getTexture() const;
+        SDL_Texture *getTexture() const;
 
-        inline void setTexture(SDL_Texture *texture);
+        void setTexture(SDL_Texture *texture);
 
-        static void New(string image_path, Entity ent) {
+        static void setRenderer(SDL_Renderer* _renderer) {
+            renderer = _renderer;
+        }
+
+        static void New(std::string image_path, Entity ent) {
             getComps().push_back(std::unique_ptr<Image>(new Image(image_path, renderer, ent)));
         }
 
-        ~Image() {
+        ~Image() override {
             SDL_DestroyTexture(texture);
         }
 
     private:
-        inline Image(string image_path, SDL_Renderer *renderer, Entity ent);
-
-        SDL_Texture *texture;
+        Image(std::string image_path, SDL_Renderer *renderer, Entity ent);
+        static SDL_Renderer* renderer;
+        SDL_Texture *texture{};
     };
-
-    inline Image::Image(string image_path, SDL_Renderer *renderer, Entity ent) : Component(ent) {
-        SDL_Surface *surface = IMG_Load((constants::gResPath + image_path).c_str());
-        texture = SDL_CreateTextureFromSurface(renderer, surface);
-    }
-
-    inline SDL_Texture *Image::getTexture() const {
-        return texture;
-    }
-
-    inline void Image::setTexture(SDL_Texture *_texture) {
-        this->texture = _texture;
-    }
 }
 
 #endif
