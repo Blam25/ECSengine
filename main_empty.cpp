@@ -24,6 +24,7 @@ using namespace std;
 #include "Keyboard_Listener.h"
 #include "Speed.h"
 #include "Missile.h"
+#include "NPC.h"
 
 
 #define FPS 60
@@ -37,6 +38,7 @@ void removeEntity(Entity ent) {
     Rect::Remove(ent);
     Speed::Remove(ent);
     Missile::Remove(ent);
+    NPC::Remove(ent);
 }
 
 Entity createMissile(string imagePath, int x, int y, int xspeed, int yspeed) {
@@ -55,7 +57,7 @@ Entity createPlayer(SDL_Renderer *renderer, int x, int y) {
     auto ent = Entity();
     Position::New(0, 0, ent);
     // Image asd = new Image();
-    Image::New("images/bg.jpg", renderer, ent);
+    Image::New("images/rymdskepp1-01.jpg", renderer, ent);
     Rect::New(x, y, 100, ent);
    // Speed::New(1,1, ent);
     Keyboard_Listener::New(ent, [ent](const Keyboard_Event& keyb_event) {
@@ -67,17 +69,17 @@ Entity createPlayer(SDL_Renderer *renderer, int x, int y) {
             // if (!rect.has_value()) return;
             if (rect->ent == ent) {
                 switch (keyb_event.key) {
-                    case SDLK_RIGHT:
+                    case SDLK_d:
                         //to_be_removed.push_back(rect->ent);
                         rect->rect->x += 5;
                         break;
-                    case SDLK_LEFT:
+                    case SDLK_a:
                         rect->rect->x -= 5;
                         break;
-                    case SDLK_UP:
+                    case SDLK_w:
                         rect->rect->y -= 5;
                         break;
-                    case SDLK_DOWN:
+                    case SDLK_s:
                         rect->rect->y += 5;
                         break;
                     case SDLK_SPACE:
@@ -90,7 +92,7 @@ Entity createPlayer(SDL_Renderer *renderer, int x, int y) {
         }
         if (missileTimer > 20 && create) {
             auto rect = Rect::Get(added);
-            createMissile("images/bg.jpg", rect->get()->rect->x+rect->get()->rect->w/2, rect->get()->rect->y, 0, -15);
+            createMissile("images/missile1.jpg", rect->get()->rect->x+rect->get()->rect->w/2, rect->get()->rect->y, 0, -15);
             missileTimer = 0;
         }
 
@@ -104,10 +106,77 @@ Entity createNPC(SDL_Renderer *renderer, int x, int y) {
     //auto ent = Entity::New();
     auto ent = Entity();
     Position::New(0, 0, ent);
-    Image::New("images/bg.jpg", renderer, ent);
-    Rect::New(x, y, 100, ent);
+    Image::New("images/fiende1-01.jpg", renderer, ent);
+    Rect::New(x, y, 50, ent);
+    Speed::New(0, 3, ent);
+    NPC::New(ent);
 
     return ent;
+}
+
+Entity createNPC2(SDL_Renderer *renderer, int x, int y) {
+    //auto ent = Entity::New();
+    auto ent = Entity();
+    Position::New(0, 0, ent);
+    Image::New("images/fiende2-01.jpg", renderer, ent);
+    Rect::New(x, y, 70, ent);
+    Speed::New(0, 5, ent);
+    NPC::New(ent);
+
+    return ent;
+}
+
+
+
+int spawnTimer = 0;
+
+void NPC_movement2() {
+    if (spawnTimer > 30) {
+        createNPC(renderer, rand() % 1000, 0);
+        spawnTimer = 0;
+    }
+/*
+    for (auto &npc: NPC::comps) {
+        auto rect = Rect::Get(npc->ent);
+        auto speed = Speed::Get(npc->ent);
+        if (rect.has_value() && speed.has_value()) {
+            speed.get()->xspeed = 2;
+            speed.get()->yspeed = 2;
+        }
+    }*/
+}
+
+
+
+
+int spawnTimer2 = 0;
+int turn = 0;
+void NPC_movement3() {
+
+        if (spawnTimer2 > 40) {
+        createNPC2(renderer, rand() % 1000, 0);
+        spawnTimer2 = 0;
+    }
+/*
+    if (spawnTimer2 > 20) {
+    Entity ent = createNPC2(renderer, rand() % 1000, 0);
+        for (auto &npc: NPC::comps) 
+        auto rect = Rect::Get(npc->ent);
+        Speed::Get(npc->ent);
+            if(turn == 0){
+            speed.get()->xspeed = -2;
+            turn = 1;
+        }
+            if(turn == 1){
+            speed.get()->xspeed = 2;
+            turn = 0;
+        }
+        }
+}
+        spawnTimer2 = 0;
+    }
+    */
+    
 }
 
 void render(SDL_Renderer *renderer) {
@@ -181,12 +250,28 @@ void check_collisions() {
     }
 }
 
+int killCounter;
+//SDL_Surface* textgrej1 = SDL_
+
 void missile_hits() {
     for (auto &rect: Rect::comps) {
         if (Keyboard_Listener::Get(rect->ent).has_value()) continue;
         auto missile = Missile::Get(rect->collided_with);
         if (missile.has_value()) {
             to_be_removed.push_back(rect->ent);
+            killCounter++;
+            cout << killCounter << endl;
+        }
+    }
+}
+
+void player_hit() {
+    for (auto& player : Keyboard_Listener::listeners) {
+        auto rect = Rect::Get(player->ent);
+        if (rect.has_value()) {
+            if (rect.get()->collided && !Missile::Get(rect.get()->collided_with).has_value()) {
+                to_be_removed.push_back(player->ent);
+            }
         }
     }
 }
@@ -206,7 +291,7 @@ int main(int argc, char *argv[]) {
         return EXIT_FAILURE;
     }
 
-    SDL_Window *window = SDL_CreateWindow("SDL test", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 800, 800, 0);
+    SDL_Window *window = SDL_CreateWindow("SDL test", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 1920, 1080, 0);
     renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
 
     auto player = createPlayer(renderer, 400, 400);
@@ -217,6 +302,8 @@ int main(int argc, char *argv[]) {
     bool running = true;
     while (running) {
         missileTimer ++;
+        spawnTimer ++;
+        spawnTimer2 ++;
         for (auto &rect: Rect::comps) { rect->collided = false; }
         next_tick = SDL_GetTicks() + tick_interval;
         SDL_Event e;
@@ -253,6 +340,11 @@ int main(int argc, char *argv[]) {
         check_collisions();
         move_with_speed();
         missile_hits();
+        NPC_movement2();
+        NPC_movement3();
+        player_hit();
+
+
         render(renderer);
         //move();
 
