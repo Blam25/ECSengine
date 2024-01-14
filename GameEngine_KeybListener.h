@@ -5,29 +5,20 @@
 #ifndef keybListener_h
 #define keybListener_h
 
+#include <functional>
+
 namespace Engine {
 
-    class Keyboard_Listener {
+    class Keyboard_Listener : public Component<Keyboard_Listener>{
     public:
-        inline static std::vector<std::unique_ptr<Keyboard_Listener>> listeners;
-        Entity ent;
         std::function<void(Keyboard_Event event)> handler;
 
-        Keyboard_Listener(Entity ent, std::function<void(Keyboard_Event event)> handler) : ent(ent) {
+        Keyboard_Listener(Entity ent, std::function<void(Keyboard_Event event)> handler) : Component(ent) {
             this->handler = handler;
         }
 
         static void New(Entity ent, std::function<void(Keyboard_Event event)> handler) {
-            listeners.push_back(std::make_unique<Keyboard_Listener>(ent, handler));
-        }
-
-        static boost::optional<std::unique_ptr<Keyboard_Listener> &> Get(Entity ent) {
-            for (auto &rect: listeners) {
-                if (ent == rect->ent) {
-                    return rect;
-                }
-            }
-            return boost::none;
+            getComps().push_back(std::make_unique<Keyboard_Listener>(ent, handler));
         }
 
     };

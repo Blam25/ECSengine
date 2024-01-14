@@ -7,14 +7,18 @@
 #define Component_h
 #include <memory>
 #include <vector>
-#include <boost/optional/optional.hpp>
+#include "GameEngine_OptionalUniquePtr.h"
+
+
 namespace Engine {
 
-//Basklass för samtliga komponenter som innehåller en statisk samling av komponenten,
-//samt en referens till en specifik entity genom en instansvariabel.
-//Klassen förbjuder värdesemantik och definierar olika funktioner som går att utföra på samlingen
-//som är gemensamma för alla komponenter. Det går heller inte att skapa objekt av denna klass då
-//den är abstrakt
+/*
+ * Basklass för samtliga komponenter. Innehåller en statisk samling av komponenten,
+ * samt en referens till en specifik entity genom en instansvariabel.
+ * Klassen förbjuder värdesemantik och definierar olika funktioner som går att utföra på samlingen
+ * som är gemensamma för alla komponenter. Det går heller inte att skapa objekt av denna klass då
+ * den är abstrakt
+ */
     template<typename T>
     class Component {
     public:
@@ -31,13 +35,14 @@ namespace Engine {
             if (remove) comps.erase(iter);
         }
 
-        static boost::optional<std::unique_ptr<T> &> Get(Entity ent) {
+        static OptionalUniquePtr<T> Get(Entity ent) {
             for (auto &comp: comps) {
                 if (ent == comp->ent) {
-                    return comp;
+                    return OptionalUniquePtr<T>(comp);
+                    //return comp;
                 }
             }
-            return boost::none;
+            return OptionalUniquePtr<T>();
         }
 
         inline virtual ~Component() = 0;

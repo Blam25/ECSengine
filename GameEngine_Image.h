@@ -2,6 +2,7 @@
 
 #include <SDL2/SDL_image.h>
 #include "GameEngine_Component.h"
+#include <string>
 
 #ifndef Image_h
 #define Image_h

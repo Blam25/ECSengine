@@ -16,12 +16,11 @@
 #include <iostream>
 #include <vector>
 #include "memory"
-#include <string>
+//#include <string>
 #include <SDL2/SDL.h>
-#include <SDL2/SDL_image.h>
+//#include <SDL2/SDL_image.h>
 #include <SDL2/SDL_mixer.h>
 #include <SDL2/SDL_ttf.h>
-#include <boost/optional/optional.hpp>
 #include <set>
 //#include "Constants.h"
 
@@ -53,9 +52,7 @@ namespace Engine {
         Image::Remove(ent);
         Rect::Remove(ent);
         Speed::Remove(ent);
-        //Missile::Remove(ent);
         NPC::Remove(ent);
-        //PowerUp::Remove(ent);
         for (auto function : removeEntitysFromSystem) {
             function(ent);
         }
@@ -105,7 +102,7 @@ namespace Engine {
 //Ta bort ett externt system
     void removeSystem(void (*func)()) {
         int indexToBeRemoved = -1;
-        for (int i = 0; i != tickSystems.size(); i++) {
+        for (int i = 0; i != (int)tickSystems.size(); i++) {
             if (tickSystems[i] == func) {
                 indexToBeRemoved = i;
             }
@@ -130,7 +127,7 @@ namespace Engine {
 //Ta bort en specifik timer från att ticka uppåt
     void removeTimer(int *timer) {
         int indexToBeRemoved = -1;
-        for (int i = 0; i != timers.size(); i++) {
+        for (int i = 0; i != (int)timers.size(); i++) {
             if (timers[i] == timer) {
                 indexToBeRemoved = i;
             }
@@ -154,6 +151,7 @@ namespace Engine {
         return 0;
     }
 
+    //Starta spelloopen
     int launchGame(int argc, char *argv[]) {
 
         //Initiera variabler för att hålla tickintervallet till 60 fps
@@ -205,7 +203,7 @@ namespace Engine {
 
             //Gå igenom alla tangentbords-events och skicka de till alla tangentbords-listeners
             for (auto keyb_event: keyboard_events) {
-                for (auto &listener: Keyboard_Listener::listeners) {
+                for (auto &listener: Keyboard_Listener::getComps()) {
                     listener->handler(keyb_event);
                 }
             }
