@@ -73,13 +73,13 @@ Engine::Entity createPlayer( int x, int y) {
                     rect.get()->getRect()->y += 5;
                     break;
                 case SDLK_SPACE:
-                    if (missileTimer > 20 && PowerUp::Get(ent).has_value()) {
+                    if (missileTimer > 25 && PowerUp::Get(ent).has_value()) {
                         createMissile(rect->get()->getRect()->x+rect->get()->getRect()->w/2, rect->get()->getRect()->y, 0, -15);
                         createMissile(rect->get()->getRect()->x+rect->get()->getRect()->w/2 - 20, rect->get()->getRect()->y, -3, -15);
                         createMissile(rect->get()->getRect()->x+rect->get()->getRect()->w/2 + 20, rect->get()->getRect()->y, 3, -15);
                         missileTimer = 0;
                     }
-                    else if (missileTimer > 20) {
+                    else if (missileTimer > 25) {
                         createMissile(rect->get()->getRect()->x+rect->get()->getRect()->w/2, rect->get()->getRect()->y, 0, -15);
                         missileTimer = 0;
                     }

@@ -19,13 +19,11 @@
 
 namespace Engine {
 
-    //Tar bort samtliga Komponenter tillhörande en specifik entity
+    //Tar bort alla komponenter tillhörande en specifik entity
     void removeEntity(Entity ent);
 
+    //Lägg till system för borttagning av entitys hos egenskapade komponenter
     void addRemoveSystem(void (*function)(Entity ent));
-
-    //Undersöker kollisioner och sparar information om dem
-    void check_collisions();
 
     //Lägg till ett externt system för tickande körning
     void addSystem(void (*func)());
