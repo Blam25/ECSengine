@@ -1,4 +1,6 @@
-
+//Grupp 80
+//Adrian Andersson Martvall adan2936
+//Ida Laaksonen idla8418
 /*
  * Denna spelmotor är baserad på en så kallad entity-component-system (ECS) spelarkitektur
  * där varje entity endast representeras av en siffra (i detta fall dold i en Entity klass)

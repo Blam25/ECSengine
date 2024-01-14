@@ -1,7 +1,6 @@
-//
-// Created by Martvall on 13/01/2024.
-//
-#include "GameEngine_Entity.h"
+//Grupp 80
+//Adrian Andersson Martvall adan2936
+//Ida Laaksonen idla8418
 #include "Constants.h"
 #include "GameEngine_Image.h"
 

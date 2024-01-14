@@ -1,23 +1,23 @@
-//
-// Created by Martvall on 18/11/2023.
-//
-
+//Grupp 80
+//Adrian Andersson Martvall adan2936
+//Ida Laaksonen idla8418
 #ifndef keybListener_h
 #define keybListener_h
 
 #include <functional>
+#include "GameEngine_Component.h"
 
 namespace Engine {
 
     class Keyboard_Listener : public Component<Keyboard_Listener>{
     public:
-        std::function<void(Keyboard_Event event)> handler;
+        std::function<void(int event)> handler;
 
-        Keyboard_Listener(Entity ent, std::function<void(Keyboard_Event event)> handler) : Component(ent) {
+        inline Keyboard_Listener(Entity ent, std::function<void(int event)> handler) : Component(ent) {
             this->handler = handler;
         }
 
-        static void New(Entity ent, std::function<void(Keyboard_Event event)> handler) {
+        static void New(Entity ent, std::function<void(int event)> handler) {
             getComps().push_back(std::make_unique<Keyboard_Listener>(ent, handler));
         }
 

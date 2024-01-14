@@ -1,3 +1,6 @@
+//Grupp 80
+//Adrian Andersson Martvall adan2936
+//Ida Laaksonen idla8418
 /*
  * Denna spelmotor är baserad på en så kallad entity-component-system (ECS) spelarkitektur
  * där varje entity endast representeras av en siffra (i detta fall dold i en Entity klass)
@@ -15,7 +18,6 @@
 #include "GameEngine.h"
 #include "GameEngine_Image.h"
 #include "GameEngine_Rect.h"
-#include "GameEngine_KeybEvent.h"
 #include "GameEngine_KeybListener.h"
 #include "GameEngine_Speed.h"
 #include "GameEngine_NPC.h"
@@ -158,10 +160,10 @@ Engine::Entity createPlayer( int x, int y) {
     Engine::Entity ent = Engine::Entity();
     Engine::Image::New("images/rymdskepp1-01.jpg", ent);
     Engine::Rect::New(x, y, 75, ent);
-    Engine::Keyboard_Listener::New(ent, [ent](const Engine::Keyboard_Event& keyb_event) {
+    Engine::Keyboard_Listener::New(ent, [ent](const int& keyb_event) {
         auto rect = Engine::Rect::Get(ent);
         if (!Engine::Rect::Get(ent).has_value()) return;
-        switch (keyb_event.key) {
+        switch (keyb_event) {
             case SDLK_RIGHT:
                 //to_be_removed.push_back(rect->ent);
                 rect.get()->getRect()->x += 5;

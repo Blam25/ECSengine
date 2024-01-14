@@ -1,4 +1,6 @@
-
+//Grupp 80
+//Adrian Andersson Martvall adan2936
+//Ida Laaksonen idla8418
 /*
  * Denna spelmotor är baserad på en så kallad entity-component-system (ECS) spelarkitektur
  * där varje entity endast representeras av en siffra (i detta fall dold i en Entity klass)
@@ -16,24 +18,17 @@
 #include <iostream>
 #include <vector>
 #include "memory"
-//#include <string>
 #include <SDL2/SDL.h>
-//#include <SDL2/SDL_image.h>
 #include <SDL2/SDL_mixer.h>
 #include <SDL2/SDL_ttf.h>
 #include <set>
-//#include "Constants.h"
 
 #include "GameEngine_Entity.h"
-//#include "Component.h"
 #include "GameEngine_Image.h"
 #include "GameEngine_Rect.h"
-#include "GameEngine_KeybEvent.h"
 #include "GameEngine_KeybListener.h"
 #include "GameEngine_Speed.h"
-//#include "GameApp_Missile.h"
 #include "GameEngine_NPC.h"
-//#include "GameApp_PowerUp.h"
 
 using namespace std;
 
@@ -41,24 +36,7 @@ namespace Engine {
 
 #define FPS 60
 
-    vector<void (*)(Entity ent)> removeEntitysFromSystem;
-
-    void addRemoveSystem(void (*function)(Entity ent)) {
-        removeEntitysFromSystem.push_back(function);
-    }
-
-    //Tar bort samtliga Komponenter tillhörande en specifik entity
-    void removeEntity(Entity ent) {
-        Image::Remove(ent);
-        Rect::Remove(ent);
-        Speed::Remove(ent);
-        NPC::Remove(ent);
-        for (auto function : removeEntitysFromSystem) {
-            function(ent);
-        }
-    }
-
-//Renderar samtliga tillagda bilder i programmet om de även har en tillhörande rektangel
+    //Renderar samtliga tillagda bilder i programmet om de även har en tillhörande rektangel
     void render(SDL_Renderer *renderer) {
         SDL_RenderClear(renderer);
         for (auto &image: Image::getComps()) {
@@ -70,12 +48,12 @@ namespace Engine {
         SDL_RenderPresent(renderer);
     }
 
-//Undersöker kollision mellan två rektanglar
+    //Undersöker kollision mellan två rektanglar
     bool is_colliding(const unique_ptr<SDL_Rect> &rect1, const unique_ptr<SDL_Rect> &rect2) {
         return SDL_HasIntersection(rect1.get(), rect2.get());
     }
 
-//Undersöker kollisioner och sparar information om dem
+    //Undersöker kollisioner och sparar information om dem
     void check_collisions() {
         for (auto &rect: Rect::getComps()) {
             for (auto &other_rect: Rect::getComps()) {
@@ -94,12 +72,12 @@ namespace Engine {
     vector<int *> timers; //Tickar uppåt i spelloopen
     vector<Entity> to_be_removed; //Samling av enheter som ska tas bort vid slutet av loopen
 
-//Lägg till ett externt system för tickande körning
+    //Lägg till ett externt system för tickande körning
     void addSystem(void (*func)()) {
         tickSystems.push_back(func);
     }
 
-//Ta bort ett externt system
+    //Ta bort ett externt system
     void removeSystem(void (*func)()) {
         int indexToBeRemoved = -1;
         for (int i = 0; i != (int)tickSystems.size(); i++) {
@@ -110,21 +88,22 @@ namespace Engine {
         if (indexToBeRemoved > -1) tickSystems.erase(tickSystems.begin() + indexToBeRemoved);
     }
 
-//Rensa alla externa system
+    //Rensa alla externa system
     void clearSystems() {
         tickSystems.clear();
     }
 
+    //Schemalägg en entity för borttagning
     void scheduleRemoveEntity(Entity ent) {
         to_be_removed.push_back(ent);
     }
 
-//Lägg till en timer för att ticka uppåt
+    //Lägg till en timer för att ticka uppåt
     void addTimer(int *timer) {
         timers.push_back(timer);
     }
 
-//Ta bort en specifik timer från att ticka uppåt
+    //Ta bort en specifik timer från att ticka uppåt
     void removeTimer(int *timer) {
         int indexToBeRemoved = -1;
         for (int i = 0; i != (int)timers.size(); i++) {
@@ -135,10 +114,29 @@ namespace Engine {
         if (indexToBeRemoved > -1) timers.erase(timers.begin() + indexToBeRemoved);
     }
 
+    //Samling för att ta bort entitys från egenskapade(från spelet) komponenter
+    vector<void (*)(Entity ent)> removeEntitysFromSystem;
+
+    //Lägg till en borttagningsfunktion till samlingen
+    void addRemoveSystem(void (*function)(Entity ent)) {
+        removeEntitysFromSystem.push_back(function);
+    }
+
+    //Tar bort samtliga Komponenter tillhörande en specifik entity
+    void removeEntity(Entity ent) {
+        Image::Remove(ent);
+        Rect::Remove(ent);
+        Speed::Remove(ent);
+        NPC::Remove(ent);
+        for (auto function : removeEntitysFromSystem) {
+            function(ent);
+        }
+    }
+
     SDL_Renderer* renderer;
     SDL_Window *window;
 
-//Initiera de variabler som krävs för att SDL ska fungera. Måste köras innan någon image komponent skapas
+    //Initiera de variabler som krävs för att SDL ska fungera. Måste köras innan någon image komponent skapas
     int initGame() {
         SDL_Init(SDL_INIT_EVERYTHING);
         if (TTF_Init() < 0) {
@@ -160,7 +158,8 @@ namespace Engine {
         int delay;
 
         //Set med knappar som är neddtryckta just nu
-        set<Keyboard_Event> keyboard_events = set<Keyboard_Event>();
+       // set<Keyboard_Event> keyboard_events = set<Keyboard_Event>();
+        set<int> keyboard_events = set<int >();
 
         bool running = true;
 
@@ -188,12 +187,12 @@ namespace Engine {
                         running = false;
                         break;
                     case SDL_KEYDOWN: //Lägg till ett nytt keyboard event i listan över sådana
-                        keyboard_events.insert(Keyboard_Event(static_cast<SDL_KeyCode>(e.key.keysym.sym)));
+                        keyboard_events.insert(e.key.keysym.sym);
                         break;
                     case SDL_KEYUP: //Ta bort det keyboard event som matchar nyckelkoden från listan
-                        for (set<Keyboard_Event>::iterator i = keyboard_events.begin();
+                        for (set<int>::iterator i = keyboard_events.begin();
                              i != keyboard_events.end(); i++) {
-                            if ((*i).key == e.key.keysym.sym) {
+                            if ((*i) == e.key.keysym.sym) {
                                 keyboard_events.erase(i);
                             }
                         }
@@ -202,7 +201,7 @@ namespace Engine {
             }
 
             //Gå igenom alla tangentbords-events och skicka de till alla tangentbords-listeners
-            for (auto keyb_event: keyboard_events) {
+            for (int keyb_event: keyboard_events) {
                 for (auto &listener: Keyboard_Listener::getComps()) {
                     listener->handler(keyb_event);
                 }

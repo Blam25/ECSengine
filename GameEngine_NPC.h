@@ -1,9 +1,11 @@
-//
-// Created by Martvall on 13/01/2024.
-//
-
+//Grupp 80
+//Adrian Andersson Martvall adan2936
+//Ida Laaksonen idla8418
 #ifndef NPC_h
 #define NPC_h
+
+#include "GameEngine_Component.h"
+
 namespace Engine {
 
 //Komponent som endast utmärker ifall en entity är en NPC eller inte
@@ -20,8 +22,6 @@ namespace Engine {
 
     };
 
-    inline NPC::NPC(Entity ent) : Component(ent) {
-
-    }
+    inline NPC::NPC(Entity ent) : Component(ent) {}
 }
 #endif

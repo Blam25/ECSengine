@@ -1,11 +1,12 @@
-
+//Grupp 80
+//Adrian Andersson Martvall adan2936
+//Ida Laaksonen idla8418
+#ifndef Image_h
+#define Image_h
 
 #include <SDL2/SDL_image.h>
 #include "GameEngine_Component.h"
 #include <string>
-
-#ifndef Image_h
-#define Image_h
 
 namespace Engine {
 //Komponent som innehåller en bild för att renderas i spelfönstret

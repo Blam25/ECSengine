@@ -1,13 +1,13 @@
-//
-// Created by Martvall on 10/01/2024.
-//
-
-
+//Grupp 80
+//Adrian Andersson Martvall adan2936
+//Ida Laaksonen idla8418
 #ifndef Component_h
 #define Component_h
+
 #include <memory>
 #include <vector>
 #include "GameEngine_OptionalUniquePtr.h"
+#include "GameEngine_Entity.h"
 
 
 namespace Engine {
